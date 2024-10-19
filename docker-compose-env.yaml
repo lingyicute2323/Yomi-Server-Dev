@@ -1,10 +1,4 @@
-version: "3"
-
-######## 项目依赖的环境，启动项目之前要先启动此环境 #######
-######## The environment that the project depends on, starting this environment before starting the project #######
-
 services:
-  #zookeeper是kafka的依赖 - Zookeeper is the dependencies of Kafka
   zookeeper:
     image: wurstmeister/zookeeper
     container_name: zookeeper
@@ -17,14 +11,13 @@ services:
     networks:
       - teamgram_net
 
-  #消息队列 - Message queue
   kafka:
     image: wurstmeister/kafka
     container_name: kafka
     ports:
       - 127.0.0.1:9092:9092
     environment:
-      #TZ: Asia/Shanghai
+      TZ: Asia/Shanghai
       KAFKA_BROKER_ID: 0
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_CREATE_TOPICS: "Inbox-T:1:0,Sync-T:1:0"
@@ -46,9 +39,9 @@ services:
     container_name: etcd
     volumes:
       - ./data/etcd/data:/data
-      - /etc/timezone:/etc/timezone
       - /etc/localtime:/etc/localtime:ro
     environment:
+      TZ: Asia/Shanghai
       ETCDCTL_API: 3
       ETCD_DATA_DIR: /data
       ETCD_NAME: node1
@@ -75,7 +68,7 @@ services:
       #redis config file
       #- ./deploy/redis/config/redis.conf:/usr/local/redis/config/redis.conf
     environment:
-      TZ: Europe/Moscow
+      TZ: Asia/Shanghai
     restart: always
     privileged: true
     command: redis-server --appendonly yes
@@ -88,8 +81,7 @@ services:
     # image: mysql/mysql-server:5.7
     container_name: mysql
     environment:
-      # 时区上海 - Time zone Shanghai (Change if needed)
-      #TZ: Asia/Shanghai
+      TZ: Asia/Shanghai
       # root 密码 - root password
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-my_root_secret}
       MYSQL_DATABASE: teamgram
