@@ -11,35 +11,45 @@ package core
 
 import (
 	"github.com/teamgram/teamgram-server/app/service/biz/dialog/dialog"
-	"github.com/teamgram/teamgram-server/app/service/biz/dialog/internal/dal/dataobject"
 )
 
 // DialogGetPinnedDialogs
 // dialog.getPinnedDialogs  user_id:long folder_id:int = Vector<DialogExt>;
 func (c *DialogCore) DialogGetPinnedDialogs(in *dialog.TLDialogGetPinnedDialogs) (*dialog.Vector_DialogExt, error) {
 	var (
-		dList    dialog.DialogExtList
-		folderId = in.GetFolderId()
-		meId     = in.GetUserId()
+		dlgExtList dialog.DialogExtList
+		folderId   = in.GetFolderId()
+		meId       = in.GetUserId()
+		dIdList    []int64
+		err        error
 	)
 
 	if folderId == 0 {
-		c.svcCtx.Dao.DialogsDAO.SelectPinnedDialogsWithCB(
-			c.ctx,
-			meId,
-			func(sz, i int, v *dataobject.DialogsDO) {
-				dList = append(dList, makeDialog(v))
-			})
+		dIdList, err = c.svcCtx.Dao.GetPinnedDialogIdList(c.ctx, meId)
+		if err != nil {
+			c.Logger.Errorf("dialog.getPinnedDialogs - error: %v", err)
+			return nil, err
+		}
 	} else {
-		c.svcCtx.Dao.DialogsDAO.SelectFolderPinnedDialogsWithCB(
-			c.ctx,
-			meId,
-			func(sz, i int, v *dataobject.DialogsDO) {
-				dList = append(dList, makeDialog(v))
-			})
+		dIdList, err = c.svcCtx.Dao.GetFolderPinnedDialogIdList(c.ctx, meId)
+		if err != nil {
+			c.Logger.Errorf("dialog.getPinnedDialogs - error: %v", err)
+			return nil, err
+		}
+	}
+	if len(dIdList) == 0 {
+		return &dialog.Vector_DialogExt{
+			Datas: make(dialog.DialogExtList, 0),
+		}, nil
+	}
+
+	dlgExtList, err = c.svcCtx.Dao.GetDialogListByIdList(c.ctx, meId, dIdList)
+	if err != nil {
+		c.Logger.Errorf("dialog.getPinnedDialogs - error: %v", err)
+		return nil, err
 	}
 
 	return &dialog.Vector_DialogExt{
-		Datas: dList,
+		Datas: dlgExtList,
 	}, nil
 }
