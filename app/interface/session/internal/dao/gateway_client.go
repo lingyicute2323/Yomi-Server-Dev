@@ -27,6 +27,7 @@ import (
 
 	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/zrpc"
+	"google.golang.org/grpc"
 )
 
 // Gateway eGateClient is a gateway.
@@ -44,7 +45,10 @@ func NewGateway(c zrpc.RpcClientConf) (*Gateway, error) {
 		serverId: c.Endpoints[0],
 	}
 
-	cli, err := zrpc.NewClient(c)
+	cli, err := zrpc.NewClient(
+		c,
+		zrpc.WithDialOption(grpc.WithReadBufferSize(16*1024*1024)),
+		zrpc.WithDialOption(grpc.WithWriteBufferSize(16*1024*1024)))
 	if err != nil {
 		logx.Errorf("watchComet NewClient(%+v) error(%v)", c, err)
 		return nil, err
